@@ -35,21 +35,21 @@ const Footer = () => {
                 className="flex items-center gap-2 text-white/60 hover:text-accent transition-colors text-sm"
               >
                 <Phone className="w-4 h-4" />
-                +261 32 02 600 43
+                +261 34 25 985 39 
               </a>
               <a
                 href="tel:+261320511222"
                 className="flex items-center gap-2 text-white/60 hover:text-accent transition-colors text-sm"
               >
                 <Phone className="w-4 h-4" />
-                +261 32 05 112 22
+                +261 32 11 112 11
               </a>
               <a
                 href="mailto:info@immotulear.mg"
                 className="flex items-center gap-2 text-white/60 hover:text-accent transition-colors text-sm"
               >
                 <Mail className="w-4 h-4" />
-                info@immotulear.mg
+                info@immo.mg
               </a>
             </div>
           </div>
