@@ -1,114 +1,93 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+import propertiesData, { 
+  getPropertiesByAction, 
+  getPropertyById as getPropertyByIdStatic,
+  getAllProperties
+} from '../data/propertiesData';
 
-export const fetchApi = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('adminToken');
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+export const API_URL = '';
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  // Remove Content-Type if sending FormData (browser sets it with boundary automatically)
-  if (options.body instanceof FormData) {
-    delete headers['Content-Type'];
-  }
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Erreur serveur: ${response.status}`);
-  }
-
-  return response.json();
-};
-
-export const loginAdmin = async (email, password) => {
-  return fetchApi('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-};
-
-export const getMe = async () => {
-  return fetchApi('/auth/me', {
-    method: 'GET',
-  });
-};
-
-export const getProperties = async () => {
-  return fetchApi('/properties', {
-    method: 'GET',
-  });
-};
-
-export const createProperty = async (data) => {
-  return fetchApi('/properties', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-};
-
-export const updateProperty = async (id, data) => {
-  return fetchApi(`/properties/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-};
-
-export const deleteProperty = async (id) => {
-  return fetchApi(`/properties/${id}`, {
-    method: 'DELETE',
-  });
-};
-
-export const uploadImages = async (files) => {
-  const formData = new FormData();
-  Array.from(files).forEach((file) => {
-    formData.append('images', file);
-  });
-  
-  return fetchApi('/upload', {
-    method: 'POST',
-    body: formData,
-  });
-};
-
-export const getAdminStats = async () => {
-  return fetchApi('/stats/dashboard', {
-    method: 'GET',
-  }).catch(() => ({ views: 0, inquiries: 0, properties: 0 }));
-};
+// Fake API delay to simulate network
+const delay = (ms = 300) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getPublicProperties = async (params = {}) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v != null && v !== '')
-  );
-  const query = new URLSearchParams(cleanParams).toString();
-  return fetchApi(`/properties?${query}`, { method: 'GET' });
+  await delay();
+  let properties = [];
+  
+  if (params.actionType) {
+    properties = getPropertiesByAction(params.actionType);
+  } else {
+    properties = getAllProperties();
+  }
+
+  if (params.search) {
+    const searchLower = params.search.toLowerCase();
+    properties = properties.filter(p => 
+      p.location.toLowerCase().includes(searchLower) ||
+      p.titre.toLowerCase().includes(searchLower) ||
+      p.type.toLowerCase().includes(searchLower)
+    );
+  }
+
+  if (params.limit) {
+    properties = properties.slice(0, parseInt(params.limit));
+  }
+
+  return { properties };
 };
 
 export const getPropertyById = async (id) => {
-  return fetchApi(`/properties/${id}`, { method: 'GET' });
+  await delay();
+  const property = getPropertyByIdStatic(id);
+  if (!property) throw new Error("Propriété non trouvée");
+  return property;
+};
+
+export const getProperties = async () => {
+  await delay();
+  return { properties: getAllProperties() };
+};
+
+export const getAdminStats = async () => {
+  await delay();
+  return { views: 1250, inquiries: 45, properties: getAllProperties().length };
+};
+
+export const loginAdmin = async (email, password) => {
+  await delay();
+  if (email === 'admin@immotulear.com' && password === 'admin123') {
+    return { token: 'fake-jwt-token-for-static-site' };
+  }
+  throw new Error('Identifiants incorrects');
+};
+
+export const getMe = async () => {
+  await delay();
+  return { user: { id: 1, email: 'admin@immotulear.com', role: 'ADMIN' } };
 };
 
 export const submitContact = async (data) => {
-  return fetchApi('/contacts', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  });
+  await delay();
+  console.log("Contact form submitted (STATIC MODE):", data);
+  return { message: 'Message envoyé avec succès' };
+};
+
+// Disable mutating functions for static site
+export const createProperty = async (data) => {
+  throw new Error("Action désactivée : Le site est en mode statique.");
+};
+export const updateProperty = async (id, data) => {
+  throw new Error("Action désactivée : Le site est en mode statique.");
+};
+export const deleteProperty = async (id) => {
+  throw new Error("Action désactivée : Le site est en mode statique.");
+};
+export const uploadImages = async (files) => {
+  throw new Error("Action désactivée : Le site est en mode statique.");
 };
 
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return '/placeholder.jpg';
   if (imagePath.startsWith('http')) return imagePath;
-  if (imagePath.startsWith('uploads/')) return `http://localhost:3001/${imagePath}`;
   if (imagePath.startsWith('/')) return imagePath;
   return `/${imagePath}`;
 };
